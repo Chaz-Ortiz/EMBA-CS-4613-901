@@ -1,4 +1,4 @@
-# Fall 2024 - UTSA Software Capstone Design Program Project
+# Spring 2025 - UTSA Software Capstone Design Program Project
 
 EMBA is designed as the central firmware
 analysis tool for penetration testers and product
