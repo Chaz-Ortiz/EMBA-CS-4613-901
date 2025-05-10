@@ -1,0 +1,110 @@
+S45_pass_file_check_auditing() {
+  # Record start time for duration tracking
+  local start_time
+  start_time=$(date +%s)
+
+  module_log_init "${FUNCNAME[0]}"
+  module_title "Search password files (AUDIT MODE)"
+  pre_module_reporter "${FUNCNAME[0]}"
+
+  # Initialize variables
+  local lPASS_FILES_FOUND=0
+  local lPASSWD_STUFF_ARR=()
+  local lSUDOERS=""
+  local lWHO_HAS_BEEN_SUDO=""
+
+  # Load paths to potential password files from config
+  mapfile -t lPASSWD_STUFF_ARR < <(config_find "${CONFIG_DIR}/pass_files.cfg")
+
+  # Handle missing config
+  if [[ "${lPASSWD_STUFF_ARR[0]-}" == "C_N_F" ]]; then
+    print_output "[!] Config not found"
+    write_log "[!] Config file missing during password check."
+  
+  # If config found
+  elif [[ ${#lPASSWD_STUFF_ARR[@]} -gt 0 ]]; then
+
+    # Step 1: Collect sudoers data
+    write_log "[*] Checking sudoers files..."
+    while IFS= read -r file; do
+      if [[ -f "$file" ]]; then
+        write_log "[+] Sudoers file found: $file"
+        lSUDOERS+=$'\n'"$(grep -hEv '^\s*($|#)' "$file" 2>/dev/null)"
+      else
+        write_log "[-] Sudoers file missing: $file"
+      fi
+    done < <(mod_path "/ETC_PATHS/sudoers")
+
+    # Step 2: Look for sudo success markers
+    write_log "[*] Checking sudo history..."
+    lWHO_HAS_BEEN_SUDO=$(find "${FIRMWARE_PATH}" "${EXCL_FIND[@]}" -xdev -name .sudo_as_admin_successful 2>/dev/null)
+
+    # Step 3: Analyze password-related files
+    if (( ${#lPASSWD_STUFF_ARR[@]} || ${#lSUDOERS} || ${#lWHO_HAS_BEEN_SUDO} )); then
+      print_output "[+] Found ${#lPASSWD_STUFF_ARR[@]} password-related files:"
+      write_log "[+] Password files found: ${#lPASSWD_STUFF_ARR[@]}"
+
+      for path in "${lPASSWD_STUFF_ARR[@]}"; do
+        print_output "$(indent "$(print_path "$path")")"
+        write_log "[*] Analyzing file: $path"
+
+        if [[ -f "$path" && ! -x "$path" ]]; then
+          local content
+          content=$(< "$path") # Read file once
+
+          local lROOT_ACCOUNTS=$(awk -F: '$3==0 {print $1}' <<< "$content" 2>/dev/null || true)
+          local lPOSSIBLE_PASSWD=$(grep -hE '^[a-zA-Z0-9]+:.:[0-9]+:[0-9]+([^:]*:){3}[^:]*$' <<< "$content" | grep -vE ':(x|\*|!)' || true)
+          local lPOSSIBLE_SHADOWS=$(grep -hE '^[a-zA-Z0-9]+:\$[0-9a-z]\$.*:[0-9]+:[0-9]+:[0-9]+([^:]*:){4}[^:]*' <<< "$content" | grep -vE ':(x|\*|!)' || true)
+
+          # Root account check
+          if [[ -n "$lROOT_ACCOUNTS" ]]; then
+            print_output "$(indent "$(green "Identified root accounts:")")"
+            print_output "$(indent "$(indent "$(orange "$lROOT_ACCOUNTS")")")"
+            write_log "[!] Root accounts detected in: $path"
+          fi
+
+          # Password or shadow hash findings
+          if [[ -n "$lPOSSIBLE_PASSWD" || -n "$lPOSSIBLE_SHADOWS" ]]; then
+            print_output "$(indent "$(green "Possible password leak:")")"
+            lPASS_FILES_FOUND=1
+            [[ -n "$lPOSSIBLE_SHADOWS" ]] && print_output "$(indent "$(indent "$(orange "$lPOSSIBLE_SHADOWS")")")"
+            [[ -n "$lPOSSIBLE_PASSWD" ]] && print_output "$(indent "$(indent "$(orange "$lPOSSIBLE_PASSWD")")")"
+            write_log "[!] Possible passwords identified in: $path"
+          fi
+        else
+          write_log "[-] Skipped non-file or executable: $path"
+        fi
+      done
+
+      # Output sudoers info if available
+      [[ -n "$lSUDOERS" ]] && {
+        print_output "[+] Sudoers configuration:"
+        print_output "$(indent "$(orange "$lSUDOERS")")"
+        write_log "[*] Sudoers config parsed."
+      }
+
+      # Output sudo usage if available
+      [[ -n "$lWHO_HAS_BEEN_SUDO" ]] && {
+        print_output "[+] Accounts that have recently used sudo:"
+        print_output "$(indent "$(orange "$lWHO_HAS_BEEN_SUDO")")"
+        write_log "[*] Sudo usage history recorded."
+      }
+    fi
+
+    # Log final statistics
+    write_log ""
+    write_log "[*] Password files with issues: ${lPASS_FILES_FOUND}"
+
+  else
+    print_output "[-] No password files found"
+    write_log "[-] No password-related files found."
+  fi
+
+  # Record and log duration
+  local end_time
+  end_time=$(date +%s)
+  write_log "[*] Duration: $((end_time - start_time)) seconds."
+
+  # End module logging
+  module_end_log "${FUNCNAME[0]}" "${#lPASSWD_STUFF_ARR[@]}"
+}
