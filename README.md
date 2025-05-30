@@ -50,11 +50,14 @@ module leverages GPU’s.
    ```bash
    git clone https://github.com/e-m-b-a/emba
    
-Replace the extraction module:
-Copy and overwrite module/p50_binwalk_extractor with:
-module/p51_mustang_binwalk_extractor
-Run EMBA with your updated module:
-./emba.sh -f /path/to/firmware.bin
+2. **Replace the extraction module**:
+   **Copy and overwrite module/p50_binwalk_extractor with**:
+   ```bash
+   module/p51_mustang_binwalk_extractor
+
+3. Run EMBA with your updated module:
+    ```bash
+   ./emba.sh -f /path/to/firmware.bin
 
 ---
 
