@@ -1,11 +1,11 @@
-# 🛡️ Spring 2025 – UTSA Software Capstone Design Project  
-## 🔍 EMBA GPU-Accelerated Firmware Analysis
+# UTSA Software Capstone Design Project - Spring 2025
+## EMBA GPU-Accelerated Firmware Analysis
 
 This project enhances the [EMBA](https://github.com/e-m-b-a/emba) (Embedded Malware Binary Analyzer) tool to improve the speed and scalability of firmware analysis using GPU acceleration. Our updated module integrates seamlessly into EMBA and provides improved performance for penetration testers and security teams working with large or complex firmware.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ![VIM p51 top](https://github.com/user-attachments/assets/c82b49b2-f7f1-4298-9785-58faf650ea85)
 ![VIM p51 DFS GPU](https://github.com/user-attachments/assets/bf39623f-ff39-47e4-9aac-3a4c913f18d0)
@@ -13,7 +13,7 @@ This project enhances the [EMBA](https://github.com/e-m-b-a/emba) (Embedded Malw
 
 ---
 
-## 💡 Project Overview
+## Project Overview
 
 **EMBA** is designed as the central firmware
 analysis tool for penetration testers and product
@@ -44,7 +44,7 @@ module leverages GPU’s.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Clone the official EMBA repository**:
    ```bash
@@ -61,7 +61,7 @@ module leverages GPU’s.
 
 ---
 
-## 🧑‍💻 Author
+## Author
 
 **Chaz Ortiz** – *Lead Developer on Group Project*  
 [GitHub](https://github.com/Chaz-Ortiz) · [LinkedIn](https://www.linkedin.com/in/chaz-ortiz-615863270/) 
